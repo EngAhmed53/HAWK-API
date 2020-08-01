@@ -1,7 +1,5 @@
 package com.shouman.hawkAPI.controller
 
-import com.shouman.hawkAPI.exception.NoContentException
-import com.shouman.hawkAPI.exception.ResourceNotFoundException
 import com.shouman.hawkAPI.model.Company
 import com.shouman.hawkAPI.model.ResponseCode
 import com.shouman.hawkAPI.model.ServerResponse
@@ -50,9 +48,11 @@ class UsersController {
     lateinit var usersService: UsersService
 
     @PostMapping("/users")
-    fun addNewUser(@RequestBody user: User?): User? {
+    fun addNewUser(@RequestBody user: User?): ResponseEntity<ServerResponse<User?>> {
         user?.let { return usersService.addNewUser(it) }
-        throw NoContentException("null values is not accepted")
+        return ResponseEntity(
+                ServerResponse<User?>(ResponseCode.NEW_USER_INFO_NOT_VALID, null),
+                HttpStatus.BAD_REQUEST)
     }
 
     @GetMapping("/users/{firebaseUID}")
@@ -62,18 +62,20 @@ class UsersController {
             if (!usersService.existsByFirebaseUID(firebaseUID)) {
 
                 return ResponseEntity(
-                        ServerResponse<User?>(false, ResponseCode.FIREBASE_CODE_NOT_VALID, null),
+                        ServerResponse<User?>(ResponseCode.FIREBASE_CODE_NOT_VALID, null),
                         HttpStatus.NOT_FOUND)
 
             } else {
                 return ResponseEntity(
-                        ServerResponse<User?>(true,
+                        ServerResponse<User?>(
                                 ResponseCode.SUCCESS,
                                 usersService.getUserByFirebaseUID(it)),
                         HttpStatus.OK)
             }
         }
-        throw ResourceNotFoundException("firebaseUID is not found")
+        return ResponseEntity(
+                ServerResponse<User?>(ResponseCode.FIREBASE_CODE_NOT_VALID, null),
+                HttpStatus.BAD_REQUEST)
     }
 
     @GetMapping("/users")
@@ -82,8 +84,12 @@ class UsersController {
     }
 
     @PutMapping("/users/{firebaseUID}")
-    fun updateUserInfo(@PathVariable firebaseUID: String?, @RequestBody newUserInfo: Company?): User? {
-        firebaseUID?.let { return newUserInfo?.let { it1 -> usersService.updateUserInfo(it, it1) } }
-        throw ResourceNotFoundException("firebaseUID is not found")
+    fun updateUserInfo(@PathVariable firebaseUID: String?, @RequestBody newUserInfo: Company?): ResponseEntity<ServerResponse<User?>>? {
+        firebaseUID?.let { uid ->
+            return newUserInfo?.let { com -> usersService.updateUserInfo(uid, com) }
+        }
+        return ResponseEntity(
+                ServerResponse<User?>(ResponseCode.FIREBASE_CODE_NOT_VALID, null),
+                HttpStatus.BAD_REQUEST)
     }
 }
