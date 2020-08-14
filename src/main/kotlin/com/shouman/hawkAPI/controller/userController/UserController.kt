@@ -1,44 +1,14 @@
-package com.shouman.hawkAPI.controller
+package com.shouman.hawkAPI.controller.userController
 
-import com.shouman.hawkAPI.model.Company
 import com.shouman.hawkAPI.model.ResponseCode
 import com.shouman.hawkAPI.model.ServerResponse
-import com.shouman.hawkAPI.model.User
-import com.shouman.hawkAPI.service.CompaniesService
-import com.shouman.hawkAPI.service.UsersService
+import com.shouman.hawkAPI.model.databaseModels.Company
+import com.shouman.hawkAPI.model.databaseModels.User
+import com.shouman.hawkAPI.service.UserService.UsersService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-
-
-@RestController
-@RequestMapping("/hawk")
-class CompaniesController {
-
-    @Autowired
-    lateinit var companiesService: CompaniesService
-
-//    @PostMapping("/companies")
-//    fun addNewCompany(@RequestBody company: Company?): Company? {
-//        company?.let { return companiesService.addNewCompany(it) }
-//        throw NoContentException("null values is not accepted")
-//    }
-
-//    @GetMapping("/companies/{firebaseUID}")
-//    fun getCompanyByFirebaseUID(@PathVariable firebaseUID: String?): Company? {
-//
-//        firebaseUID?.let { return companiesService.getCompanyByFirebaseUID(it) }
-//        throw ResourceNotFoundException("firebaseUID is not found")
-//    }
-
-    @GetMapping("/companies")
-    fun getAllCompanies(): MutableList<Company> {
-        return companiesService.getAllCompanies()
-    }
-
-}
-
 
 @RestController
 @RequestMapping("/hawk")
@@ -83,7 +53,7 @@ class UsersController {
         return usersService.getAllUsers()
     }
 
-    @PutMapping("/users/{firebaseUID}")
+    @PutMapping("/users/companies/{firebaseUID}")
     fun updateUserInfo(@PathVariable firebaseUID: String?, @RequestBody newUserInfo: Company?): ResponseEntity<ServerResponse<User?>>? {
         firebaseUID?.let { uid ->
             return newUserInfo?.let { com -> usersService.updateUserInfo(uid, com) }

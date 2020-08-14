@@ -1,33 +1,15 @@
-package com.shouman.hawkAPI.service
+package com.shouman.hawkAPI.service.UserService
 
-import com.shouman.hawkAPI.model.*
-import com.shouman.hawkAPI.repository.CompaniesRepo
-import com.shouman.hawkAPI.repository.UsersRepo
+import com.shouman.hawkAPI.model.ResponseCode
+import com.shouman.hawkAPI.model.ServerResponse
+import com.shouman.hawkAPI.model.databaseModels.Company
+import com.shouman.hawkAPI.model.databaseModels.User
+import com.shouman.hawkAPI.repository.companiesRepository.CompaniesRepo
+import com.shouman.hawkAPI.repository.usersRepository.UsersRepo
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
-
-
-interface CompaniesService {
-    fun getAllCompanies(): MutableList<Company>
-}
-
-@Service
-class CompaniesServiceImpl : CompaniesService {
-
-    @Autowired
-    lateinit var companiesRepo: CompaniesRepo
-
-    override fun getAllCompanies(): MutableList<Company> {
-        return companiesRepo.findAll()
-    }
-
-//    override fun getCompanyByFirebaseUID(firebaseUID: String): Company? {
-//        return companiesRepo.getCompanyByFirebaseUID(firebaseUID)
-//    }
-}
-
 
 interface UsersService {
     fun addNewUser(user: User): ResponseEntity<ServerResponse<User?>>
@@ -59,6 +41,16 @@ class UsersServiceImpl : UsersService {
     }
 
     override fun addNewUser(user: User): ResponseEntity<ServerResponse<User?>> {
+        // if the is already exist in the database
+        // by his firebaseUID this mean that this
+        // user was logged out and he need to log in again
+        // we return the same user and not creating any new users
+        if (existsByFirebaseUID(user.firebaseUID)) {
+            return ResponseEntity(
+                    ServerResponse<User?>(ResponseCode.SUCCESS, getUserByFirebaseUID(user.firebaseUID)),
+                    HttpStatus.OK)
+        }
+        // if the user is not found we create new one
         return ResponseEntity(
                 ServerResponse<User?>(ResponseCode.SUCCESS, usersRepo.save(user)),
                 HttpStatus.OK)
@@ -80,17 +72,16 @@ class UsersServiceImpl : UsersService {
                     it.companyName = newUserInfo.companyName
                     it.ownerName = newUserInfo.ownerName
                     it.ownerPhoneNumber = newUserInfo.ownerPhoneNumber
+                    it.imgURL = newUserInfo.imgURL
+                    it.user = user
                     user.company = it
-                    companiesRepo.save(it)
                     return ResponseEntity(
                             ServerResponse<User?>(ResponseCode.SUCCESS, usersRepo.save(user)),
                             HttpStatus.OK)
 
                 }
-                newUserInfo.user = user
-                user.type = UserType.COMPANY
                 user.company = newUserInfo
-                companiesRepo.save(newUserInfo)
+                newUserInfo.user = user
                 return ResponseEntity(
                         ServerResponse<User?>(ResponseCode.SUCCESS, usersRepo.save(user)),
                         HttpStatus.OK)
